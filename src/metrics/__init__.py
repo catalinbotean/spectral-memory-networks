@@ -1,13 +1,13 @@
-from .accuracy import accuracy
-from .dice import dice_score
-from .miou import miou
-from .depth_rmse import depth_rmse
-from .depth_abs_rel import depth_abs_rel
+from .classification_accuracy import classification_accuracy
+from .depth_absolute_relative_error import depth_absolute_relative_error
+from .depth_root_mean_squared_error import depth_root_mean_squared_error
+from .mean_intersection_over_union import mean_intersection_over_union
+from .multiclass_dice_score import multiclass_dice_score
 
 __all__ = [
-    "accuracy",
-    "dice_score",
-    "miou",
-    "depth_rmse",
-    "depth_abs_rel",
+    "classification_accuracy",
+    "depth_absolute_relative_error",
+    "depth_root_mean_squared_error",
+    "mean_intersection_over_union",
+    "multiclass_dice_score",
 ]
