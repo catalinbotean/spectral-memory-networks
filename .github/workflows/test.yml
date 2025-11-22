@@ -26,5 +26,8 @@ jobs:
         pip install -r requirements.txt || true
         pip install pytest
 
-    - name: Run tests
+    - name: Test with pytest
       run: pytest -q
+      env:
+        PYTHONPATH: ${{ github.workspace }}/spectral-memory-networks
+
