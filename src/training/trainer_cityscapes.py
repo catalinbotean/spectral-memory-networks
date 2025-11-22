@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 
 from src.metrics.mean_intersection_over_union import mean_intersection_over_union
 from src.metrics.multiclass_dice_score import multiclass_dice_score
+from src.utils.logging import SimpleLogger
 
 
 @dataclass
@@ -19,7 +20,8 @@ class TrainerConfig:
     max_epochs: int = 50
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     num_classes: int = 19
-    print_every: int = 10
+    log_every: int = 10
+    log_dir: str = "./logs"
 
 
 class CityscapesTrainer:
@@ -42,6 +44,8 @@ class CityscapesTrainer:
         self.config = config
 
         self.criterion = nn.CrossEntropyLoss(ignore_index=255)
+
+        self.logger = SimpleLogger(log_dir=config.log_dir, name="cityscapes_training")
 
     # ------------------------------------------------------------------
     # Training step
@@ -95,6 +99,9 @@ class CityscapesTrainer:
     # Training Loop
     # ------------------------------------------------------------------
     def train(self) -> None:
+        self.logger.log(f"Starting training for {self.config.max_epochs} epochs on {self.config.device}")
+        self.logger.log(f"Model parameters: {sum(p.numel() for p in self.model.parameters() if p.requires_grad):,}")
+
         for epoch in range(1, self.config.max_epochs + 1):
             train_losses = []
 
@@ -102,8 +109,8 @@ class CityscapesTrainer:
                 loss = self._train_step(batch)
                 train_losses.append(loss)
 
-                if step_index % self.config.print_every == 0:
-                    print(
+                if step_index % self.config.log_every == 0:
+                    self.logger.log(
                         f"[Epoch {epoch:03d}] Step {step_index:04d} "
                         f"Train Loss: {loss:.4f}"
                     )
@@ -112,12 +119,12 @@ class CityscapesTrainer:
 
             val_metrics = self._run_validation_epoch()
 
-            print(
+            self.logger.log(
                 f"==== Epoch {epoch}/{self.config.max_epochs} ====\n"
                 f"Train Loss: {avg_train_loss:.4f}\n"
                 f"Val Loss:   {val_metrics['loss']:.4f}\n"
                 f"mIoU:       {val_metrics['miou']:.4f}\n"
-                f"Dice:       {val_metrics['dice']:.4f}\n"
+                f"Dice:       {val_metrics['dice']:.4f}"
             )
 
     # ------------------------------------------------------------------
