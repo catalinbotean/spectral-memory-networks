@@ -19,7 +19,7 @@ class SpectralMemoryUNetEncoder(nn.Module):
     regularization).
     """
 
-    def __init(
+    def __init__(
         self,
         input_channels: int,
         number_of_stages: int = 4,
@@ -204,10 +204,23 @@ class SpectralMemoryUNetEncoder(nn.Module):
                 stride=self.downsampling_stride,
             )
 
-        return nn.MaxPool2d(
-            kernel_size=self.downsampling_kernel_size,
-            stride=self.downsampling_stride,
-        )
+        if input_channels != output_channels:
+            return nn.Sequential(
+                nn.MaxPool2d(
+                    kernel_size=self.downsampling_kernel_size,
+                    stride=self.downsampling_stride,
+                ),
+                nn.Conv2d(
+                    in_channels=input_channels,
+                    out_channels=output_channels,
+                    kernel_size=1,
+                )
+            )
+        else:
+            return nn.MaxPool2d(
+                kernel_size=self.downsampling_kernel_size,
+                stride=self.downsampling_stride,
+            )
 
     # -------------------------------------------------------------------------
     # Forward

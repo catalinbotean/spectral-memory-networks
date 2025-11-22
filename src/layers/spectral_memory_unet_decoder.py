@@ -102,19 +102,28 @@ class SpectralMemoryUNetDecoder(nn.Module):
         upsampling_layers = nn.ModuleList()
         skip_merging_convolutions = nn.ModuleList()
 
-        for stage_index in range(number_of_stages):
-            # We go from deepest to shallower stages:
-            index_from_bottom = number_of_stages - 1 - stage_index
+        # For the first decoder stage, input comes from the deepest encoder representation
+        # For subsequent stages, input comes from the previous decoder stage
+        current_channels = encoder_channels_per_stage[-1]  # Start with deepest encoder channels
 
-            input_channels_from_bottom = encoder_channels_per_stage[index_from_bottom]
-            skip_channels = encoder_channels_per_stage[index_from_bottom - 1]
+        for stage_index in range(number_of_stages):
+            # Skip connections are used in reverse order: from deepest to shallowest
+            # Stage 0 uses skip from encoder stage (n-2), Stage 1 from (n-3), etc.
+            skip_stage_index = len(encoder_channels_per_stage) - 2 - stage_index
+
+            if skip_stage_index < 0:
+                raise ValueError(f"Not enough encoder stages for decoder stage {stage_index}")
+
+            skip_channels = encoder_channels_per_stage[skip_stage_index]
             output_channels = skip_channels
 
             upsampling_layer = self._build_upsampling_layer(
-                input_channels=input_channels_from_bottom,
+                input_channels=current_channels,
                 output_channels=output_channels,
             )
             upsampling_layers.append(upsampling_layer)
+
+            current_channels = output_channels
 
             skip_merging_convolution = nn.Conv2d(
                 in_channels=output_channels + skip_channels,
